@@ -1,0 +1,7 @@
+__pycache__
+.python-version
+boxes.json
+bucket/
+model.json
+seg.json
+wandb/
