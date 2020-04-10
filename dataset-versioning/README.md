@@ -1,5 +1,7 @@
 # Dataset versioning with W&B Artifacts
 
+*W&B Artifacts is currently in the pilot phase, as we work with customers to refine the APIs and experience.*
+
 This folder contains an end-to-end example of how to version your datasets using W&B Artifacts.
 
 Please refer to our [Guide to Managing ML Datasets with W&B Artifacts](https://paper.dropbox.com/doc/Guide-Managing-ML-datasets-with-WB-Artifacts-draft-AmoGgY4qwdu4z2w7xHCMu) doc for an overview of the concepts used here.
