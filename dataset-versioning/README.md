@@ -18,6 +18,7 @@ sh download_coco_val.sh
 Special step for artifacts pilot: install wandb from the client repo pilot/artifacts branch.
 
 ```
+pip uninstall wandb
 pip install https://github.com/wandb/client/archive/pilot/artifacts.zip
 ```
 
