@@ -43,7 +43,7 @@ def main(argv):
         library_ds_artifact = library_ds.artifact()
 
         # If the digests aren't equal, then the labels have been updated, save the
-        # library dataset artifact as the new version for this dataset.
+        # library dataset artifact as the new versoin for this dataset.
         if ds_artifact.digest != library_ds_artifact.digest:
             print('  updated, create new dataset version')
             run.log_artifact(

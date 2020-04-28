@@ -1,12 +1,17 @@
 """Query our data library, to produce a new dataset artifact."""
 
 import argparse
+import collections
+import os
 import random
 import sys
+import tempfile
 
 import wandb
 
 import dataset
+import bucket_api
+import data_library
 import data_library_query
 
 parser = argparse.ArgumentParser(description='Process some integers.')
@@ -51,14 +56,16 @@ def main(argv):
         print('Error, you must select at least 1 image')
         sys.exit(1)
 
-    artifact = run.new_artifact(type='dataset', name=args.dataset_name, aliases=['latest'])
+    # query our library to make the dataset.
+    ds = dataset.Dataset.from_library_query(
+        example_image_paths, args.annotation_types)
 
-    # query our library to make the dataset, loading the examples and labels into our new
-    # artifact
-    dataset.Dataset.from_library_query(artifact, example_image_paths, args.annotation_types)
-
-    # log the artifact to W&B
-    artifact.save()
+    # log the artifact to W&B. The ds.artifact() method does the work
+    # of computing the artifact's actual contents
+    run.log_artifact(
+        artifact=ds.artifact(),
+        name=args.dataset_name,
+        aliases=['latest'])
 
 
 if __name__ == '__main__':
