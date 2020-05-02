@@ -30,11 +30,10 @@ def main(argv):
 
         # construct dataset artifact contents using the example in the loaded dataset,
         # but with the most recent labels from the library.
-        artifact = run.new_artifact(type='dataset', name=d.name, aliases=['latest'])
-        dataset.Dataset.from_library_query(artifact,ds.example_image_paths,
+        artifact = wandb.Artifact(type='dataset', name=d.name, aliases=['latest'])
+        dataset.Dataset.from_library_query(artifact, ds.example_image_paths,
                                            ds_artifact.metadata['annotation_types'])
-
-        artifact.save()
+        run.log_artifact(artifact)
 
 
 if __name__ == '__main__':

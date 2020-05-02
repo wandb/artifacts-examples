@@ -51,14 +51,14 @@ def main(argv):
         print('Error, you must select at least 1 image')
         sys.exit(1)
 
-    artifact = run.new_artifact(type='dataset', name=args.dataset_name, aliases=['latest'])
+    artifact = wandb.Artifact(type='dataset', name=args.dataset_name, aliases=['latest'])
 
     # query our library to make the dataset, loading the examples and labels into our new
     # artifact
     dataset.Dataset.from_library_query(artifact, example_image_paths, args.annotation_types)
 
     # log the artifact to W&B
-    artifact.save()
+    run.log_artifact(artifact)
 
 
 if __name__ == '__main__':
