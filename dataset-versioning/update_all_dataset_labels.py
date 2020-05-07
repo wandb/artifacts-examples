@@ -33,23 +33,21 @@ def main(argv):
 
         # fetch the latest version of each dataset artifact and download it's contents
         ds_artifact = run.use_artifact(type='dataset', name='%s:latest' % d.name)
-        ds = dataset.Dataset.from_artifact(ds_artifact)
+        labels = json.load(open(ds_artifact.load_path('labels.json').local()))
+        example_paths = set(l['image_path'] for l in labels)
 
         # construct dataset artifact contents using the example in the loaded dataset,
         # but with the most recent labels from the library.
-        library_ds = dataset.Dataset.from_library_query(
-            ds.example_image_paths,
+        library_ds_artifact = dataset.create_dataset(
+            example_paths,
             ds_artifact.metadata['annotation_types'])
-        library_ds_artifact = library_ds.artifact()
 
         # If the digests aren't equal, then the labels have been updated, save the
         # library dataset artifact as the new version for this dataset.
         if ds_artifact.digest != library_ds_artifact.digest:
             print('  updated, create new dataset version')
-            run.log_artifact(
-                artifact=library_ds_artifact,
-                name=d.name,
-                aliases=['latest'])
+            artifact = wandb.Artifact(type='dataset', name=d.name, aliases=['latest'])
+            run.log_artifact(artifact)
 
 
 if __name__ == '__main__':

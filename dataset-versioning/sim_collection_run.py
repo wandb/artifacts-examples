@@ -15,7 +15,6 @@ parser.add_argument('collection_id', type=str, help='')
 parser.add_argument('min_example_id', type=int, help='')
 parser.add_argument('max_example_id', type=int, help='')
 
-
 def main(argv):
     args = parser.parse_args()
     bucketapi = bucket_api.get_bucket_api()
@@ -24,7 +23,7 @@ def main(argv):
     collection_id = args.collection_id
 
     img_ids = [id_ for id_ in coco_api.getImgIds()
-        if id_ > args.min_example_id <= args.max_example_id]
+        if id_ > args.min_example_id and id_ <= args.max_example_id]
     imgs = coco_api.loadImgs(img_ids)
     for img in imgs:
         example_id = img['id']

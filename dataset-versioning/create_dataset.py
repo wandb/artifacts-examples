@@ -1,12 +1,17 @@
 """Query our data library, to produce a new dataset artifact."""
 
 import argparse
+import collections
+import os
 import random
 import sys
+import tempfile
 
 import wandb
 
 import dataset
+import bucket_api
+import data_library
 import data_library_query
 
 parser = argparse.ArgumentParser(description='Process some integers.')
@@ -39,6 +44,7 @@ def main(argv):
 
     # Query our data library for examples that have labels in the specified
     # categories or supercategories.
+
     chosen_cats = data_library_query.categories_filtered(
         args.supercategories, args.categories)
     chosen_cat_ids = [c['id'] for c in chosen_cats]
@@ -51,14 +57,13 @@ def main(argv):
         print('Error, you must select at least 1 image')
         sys.exit(1)
 
-    artifact = run.new_artifact(type='dataset', name=args.dataset_name, aliases=['latest'])
+    # query our library to make the dataset.
+    ds_artifact = dataset.create_dataset(example_image_paths, args.annotation_types)
+    ds_artifact.name = args.dataset_name
+    ds_artifact.aliases = ['latest']
 
-    # query our library to make the dataset, loading the examples and labels into our new
-    # artifact
-    dataset.Dataset.from_library_query(artifact, example_image_paths, args.annotation_types)
-
-    # log the artifact to W&B
-    artifact.save()
+    # log the artifact to W&B.
+    run.log_artifact(ds_artifact)
 
 
 if __name__ == '__main__':

@@ -8,6 +8,9 @@ class BucketApiS3(object):
     def __init(self, bucket_name):
         self._bucket_name = bucket_name
         self._s3 = boto3.client('s3')
+
+    def prefix(self):
+        return 's3://%s' % self._local_dir
     
     def download_file(self, key, local_path, hash=None):
         # TODO: hash implementation: don't download if we already have the correct
@@ -25,6 +28,10 @@ class BucketApiS3(object):
 class BucketApiLocal(object):
     def __init__(self, local_dir):
         self._local_dir = local_dir
+
+    @property
+    def prefix(self):
+        return 'file://%s' % self._local_dir
     
     def download_file(self, key, local_path, hash=None):
         dirname = os.path.dirname(local_path)
@@ -59,11 +66,14 @@ def get_bucket_api():
         print('Missing %s, please see README.md' % bucket_settings_fname)
         sys.exit(1)
     bucket_url = open(bucket_settings_fname).read().strip()
-    if bucket_url.startswith('local://'):
-        local_path = bucket_url.lstrip('local://')
+    if bucket_url.startswith('file://'):
+        local_path = remove_prefix(bucket_url, 'file://')
         return BucketApiLocal(local_path)
     elif bucket_url.startswith('s3://'):
-        bucket_name = bucket_url.lstrip('s3://')
+        bucket_name = remove_prefix(bucket_url, 's3://')
         return BucketApiLocal(bucket_name)
     print('Invalid bucket url. Please see README.md. %s' % bucket_url)
     sys.exit(1)
+
+def remove_prefix(from_string, prefix):
+    return from_string[len(prefix):]

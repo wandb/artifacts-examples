@@ -5,6 +5,7 @@ import collections
 import os
 import random
 import sys
+import json
 import tempfile
 
 import wandb
@@ -32,15 +33,14 @@ def main(argv):
             args.dataset, ds_artifact.metadata['annotation_types'], args.model_type))
         sys.exit(1)
 
-    # Initialize our Dataset class from the artifact's contents, and download
-    # the actual dataset examples.
-    ds = dataset.Dataset.from_artifact(ds_artifact)
-    dataset_dir = ds.download()
+    # Download the dataset
+    dataset_dir = ds_artifact.download()
+    labels = json.load(open(os.path.join(dataset_dir, 'labels.json')))
 
     # Build X (images) and y (labels) for training
     X, y = [], []
-    for label in ds.labels:
-        X.append(os.path.join(dataset_dir, label['image_path']))
+    for label in labels:
+        X.append(open(os.path.join(dataset_dir, 'images', label['image_path'])))
         y.append(label['bbox'])
     print ('Xlen, ylen', len(X), len(y))
 
@@ -55,11 +55,12 @@ def main(argv):
         'This is a placeholder. In a real job, you\'d save model weights here\n%s\n' % random.random())
     model_file.close()
 
-    run.log_artifact(
+    artifact = wandb.Artifact(
         type='model',
         name=args.model_type,
-        paths='model.json',
         aliases='latest')
+    artifact.add_file('model.json')
+    run.log_artifact(artifact)
 
 if __name__ == '__main__':
     main(sys.argv)
