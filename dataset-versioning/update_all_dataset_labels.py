@@ -46,8 +46,10 @@ def main(argv):
         # library dataset artifact as the new version for this dataset.
         if ds_artifact.digest != library_ds_artifact.digest:
             print('  updated, create new dataset version')
-            artifact = wandb.Artifact(type='dataset', name=d.name, aliases=['latest'])
-            run.log_artifact(artifact)
+            library_ds_artifact.type = 'dataset'
+            library_ds_artifact.name = d.name
+            library_ds_artifact.aliases = ['latest']
+            run.log_artifact(library_ds_artifact)
 
 
 if __name__ == '__main__':
