@@ -55,7 +55,16 @@ def create_dataset(example_image_paths, label_types):
             'category_counts': cat_counts})
 
     # Add all of the images to the dataset. We add them as references,
-    # which means the artifact won't contain the images themselves.
+    # which means the artifact won't contain the images themselves. Instead,
+    # the artifact's manifest will contain pointers to the images in your
+    # library.
+    #
+    # Alternatively, you can store the files directly in the artifact,
+    # by downloading them from the library and then adding them using add_file.
+    # You can do this without sending any of the actual data to W&B by using
+    # our BYOB (Bring Your Own Bucket) feature.
+    #
+    # Either way, consumer APIs will be exactly the same!
     for example_path in example_paths:
         artifact.add_reference(
             data_library.get_absolute_path(example_path),
