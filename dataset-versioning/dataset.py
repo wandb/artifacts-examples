@@ -26,9 +26,15 @@ def random_string(n):
     return ''.join(random.choice(letters) for i in range(n))
 
 def create_dataset(example_image_paths, label_types):
+    """Create a dataset artifact by querying our data library."""
+
+    # query our data library to get all labels for the examples we
+    # want to include in this dataset
     labels = data_library_query.labels_for_images(
         example_image_paths, label_types)
 
+    # compute counts of labels for each category, to store in our
+    # dataset's metadata
     cat_counts = defaultdict(int)
     categories = data_library.get_categories()
     cats_by_id = {c['id']: c['name'] for c in categories}
@@ -36,7 +42,11 @@ def create_dataset(example_image_paths, label_types):
         cat_name = cats_by_id[l['category_id']]
         cat_counts[cat_name] += 1
 
+    # get the final set of example paths
     example_paths = set(l['image_path'] for l in labels)
+
+    # Create our dataset artifact. We can store whatever we want in
+    # metadata, for later querying.
     artifact = wandb.Artifact(
         type='dataset',
         metadata= {
@@ -44,11 +54,16 @@ def create_dataset(example_image_paths, label_types):
             'annotation_types': label_types,
             'category_counts': cat_counts})
 
+    # Add all of the images to the dataset. We add them as references,
+    # which means the artifact won't contain the images themselves.
     for example_path in example_paths:
         artifact.add_reference(
             data_library.get_absolute_path(example_path),
             name=os.path.join('images', example_path))
+
+    # Store the labels file itself inside the artifact
     with artifact.new_file(LABELS_FNAME) as f:
+        # We use sort_keys=True to get a consistent result
         json.dump(labels, f, indent=2, sort_keys=True)
 
     return artifact
