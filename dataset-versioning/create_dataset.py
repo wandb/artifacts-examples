@@ -59,11 +59,9 @@ def main(argv):
 
     # query our library to make the dataset.
     ds_artifact = dataset.create_dataset(example_image_paths, args.annotation_types)
-    ds_artifact.name = args.dataset_name
-    ds_artifact.aliases = ['latest']
 
     # log the artifact to W&B.
-    run.log_artifact(ds_artifact)
+    run.log_artifact(ds_artifact, name=args.dataset_name)
 
 
 if __name__ == '__main__':

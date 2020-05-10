@@ -33,7 +33,7 @@ def main(argv):
 
         # fetch the latest version of each dataset artifact and download it's contents
         ds_artifact = run.use_artifact(type='dataset', name='%s:latest' % d.name)
-        labels = json.load(open(ds_artifact.load_path('labels.json').local()))
+        labels = json.load(open(ds_artifact.get_path('labels.json').download()))
         example_paths = set(l['image_path'] for l in labels)
 
         # construct dataset artifact contents using the example in the loaded dataset,
@@ -47,9 +47,7 @@ def main(argv):
         if ds_artifact.digest != library_ds_artifact.digest:
             print('  updated, create new dataset version')
             library_ds_artifact.type = 'dataset'
-            library_ds_artifact.name = d.name
-            library_ds_artifact.aliases = ['latest']
-            run.log_artifact(library_ds_artifact)
+            run.log_artifact(library_ds_artifact, name=d.name)
 
 
 if __name__ == '__main__':
