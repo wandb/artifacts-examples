@@ -12,6 +12,10 @@ SEGMENTATION_PATH = 'labels/segmentation.json'
 def get_image_path(collection_id, example_id):
     return '/'.join(('collections', collection_id, '%012u.jpg' % example_id))
 
+def get_absolute_path(path):
+    bucketapi = bucket_api.get_bucket_api()
+    return os.path.join(bucketapi.prefix, path)
+
 def get_categories():
     bucketapi = bucket_api.get_bucket_api()
     with tempfile.TemporaryDirectory() as tempdir:

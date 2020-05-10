@@ -44,6 +44,7 @@ def main(argv):
 
     # Query our data library for examples that have labels in the specified
     # categories or supercategories.
+
     chosen_cats = data_library_query.categories_filtered(
         args.supercategories, args.categories)
     chosen_cat_ids = [c['id'] for c in chosen_cats]
@@ -57,15 +58,10 @@ def main(argv):
         sys.exit(1)
 
     # query our library to make the dataset.
-    ds = dataset.Dataset.from_library_query(
-        example_image_paths, args.annotation_types)
+    ds_artifact = dataset.create_dataset(example_image_paths, args.annotation_types)
 
-    # log the artifact to W&B. The ds.artifact() method does the work
-    # of computing the artifact's actual contents
-    run.log_artifact(
-        artifact=ds.artifact(),
-        name=args.dataset_name,
-        aliases=['latest'])
+    # log the artifact to W&B.
+    run.log_artifact(ds_artifact, name=args.dataset_name)
 
 
 if __name__ == '__main__':
