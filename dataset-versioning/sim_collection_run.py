@@ -18,6 +18,7 @@ parser.add_argument('max_example_id', type=int, help='')
 def main(argv):
     args = parser.parse_args()
     bucketapi = bucket_api.get_bucket_api()
+    now = datetime.now()
     coco_api = COCO('./demodata/coco/annotations/instances_val2017.json')
 
     collection_id = args.collection_id
