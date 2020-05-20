@@ -1,0 +1,5 @@
+wandb
+*.pyc
+.python-version
+copyfiles.sh
+*.json
