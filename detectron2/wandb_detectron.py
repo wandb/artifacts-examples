@@ -139,7 +139,7 @@ class WandbCheckpointer(checkpoint.DetectionCheckpointer):
             # by the checkpointer, so this is free.
             local_path = PathManager.get_local_path(path)
             # TODO: This is not uploading local_path for some reason.
-            artifact = wandb.Artifact(type='dataset', metadata={
+            artifact = wandb.Artifact(type='model', metadata={
                 'reference': path,
                 'format': {'type': 'detectron_model'}
             })
