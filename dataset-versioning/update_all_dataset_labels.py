@@ -39,6 +39,7 @@ def main(argv):
         # construct dataset artifact contents using the example in the loaded dataset,
         # but with the most recent labels from the library.
         library_ds_artifact = dataset.create_dataset(
+            d.name,
             example_paths,
             ds_artifact.metadata['annotation_types'])
 
@@ -46,8 +47,7 @@ def main(argv):
         # library dataset artifact as the new versoin for this dataset.
         if ds_artifact.digest != library_ds_artifact.digest:
             print('  updated, create new dataset version')
-            library_ds_artifact.type = 'dataset'
-            run.log_artifact(library_ds_artifact, name=d.name)
+            run.log_artifact(library_ds_artifact)
 
 
 if __name__ == '__main__':

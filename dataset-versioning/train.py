@@ -55,9 +55,9 @@ def main(argv):
         'This is a placeholder. In a real job, you\'d save model weights here\n%s\n' % random.random())
     model_file.close()
 
-    artifact = wandb.Artifact(type='model')
+    artifact = wandb.Artifact(type='model', name=args.model_type)
     artifact.add_file('model.json')
-    run.log_artifact(artifact, name=args.model_type)
+    run.log_artifact(artifact)
 
 if __name__ == '__main__':
     main(sys.argv)

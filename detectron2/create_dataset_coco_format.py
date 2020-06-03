@@ -39,6 +39,7 @@ def main(argv):
 
     artifact = wandb.Artifact(
         type='dataset',
+        name=args.name,
         metadata={'format': {'type': 'coco_dataset_json'}})
     artifact.add_file(args.json_file, name='annotations.json')
 
@@ -49,7 +50,7 @@ def main(argv):
         image_path = os.path.join(args.image_dir, image['file_name'])
         artifact.add_file(image_path, name='/'.join(('images', image['file_name'])))
 
-    run.log_artifact(artifact, name=args.name)
+    run.log_artifact(artifact)
 
 
 if __name__ == '__main__':

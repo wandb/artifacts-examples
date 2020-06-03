@@ -215,7 +215,8 @@ def main(args):
             verify_results(cfg, res)
         for file in glob.glob(os.path.join(cfg.OUTPUT_DIR, 'inference', '*')):
             eval_artifact = wandb.Artifact(
-                type='result')
+                type='result',
+                name='Run - %s - %s' % (run.id, os.path.basename(file)))
             with eval_artifact.new_file('dataset.json') as f:
                 # TODO: we should use the URI for whatever our input artifact
                 #   ended up being, rather than what's passed in via test
@@ -224,8 +225,7 @@ def main(args):
                 # TODO: standardize how to do this.
                 json.dump({'dataset_artifact': cfg.DATASETS.TEST}, f)
             eval_artifact.add_file(file)
-            wandb.run.log_artifact(eval_artifact,
-                name='Run - %s - %s' % (run.id, os.path.basename(file)))
+            wandb.run.log_artifact(eval_artifact)
         return res
 
     """

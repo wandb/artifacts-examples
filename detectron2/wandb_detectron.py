@@ -139,12 +139,12 @@ class WandbCheckpointer(checkpoint.DetectionCheckpointer):
             # by the checkpointer, so this is free.
             local_path = PathManager.get_local_path(path)
             # TODO: This is not uploading local_path for some reason.
-            artifact = wandb.Artifact(type='model', metadata={
+            artifact = wandb.Artifact(type='model', name=name, metadata={
                 'reference': path,
                 'format': {'type': 'detectron_model'}
             })
             artifact.add_file(local_path)
-            wandb.run.use_artifact(artifact, name=name)
+            wandb.run.use_artifact(artifact)
 
         return super().load(path, checkpointables)
 
@@ -236,6 +236,7 @@ class WandbModelSaveHook(HookBase):
             print('SAVING WITH IMPROVED', improved_metrics)
             artifact = wandb.Artifact(
                 type='model',
+                name='Trained by run - %s' % wandb.run.id,
                 metadata={
                     'format': {'type': 'detectron_model'},
                     'training': {
@@ -245,7 +246,6 @@ class WandbModelSaveHook(HookBase):
                 })
             artifact.add_file(checkpoint_file, 'model.pth')
             wandb.run.log_artifact(artifact,
-                name='Trained by run - %s' % wandb.run.id,
                 aliases=[self._metric_alias(m) for m in improved_metrics])
 
             # Create an evaluation run that uses this artifact as input and generates
@@ -274,6 +274,7 @@ class WandbModelSaveHook(HookBase):
                 print('SAVING FOR UNSAVED best', metric)
                 artifact = wandb.Artifact(
                     type='model',
+                    name='Trained by run - %s' % wandb.run.id,
                     metadata={
                         'format': {'type': 'detectron_model'},
                         'log_step': best_step
@@ -283,5 +284,4 @@ class WandbModelSaveHook(HookBase):
                 # the backend logic correctly merge the aliases?
                 artifact.add_file(checkpoint_file, 'model.pth')
                 wandb.run.log_artifact(artifact,
-                    name='Trained by run - %s' % wandb.run.id,
                     aliases=[self._metric_alias(m) for m in improved_metrics])

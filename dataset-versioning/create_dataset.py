@@ -58,10 +58,10 @@ def main(argv):
         sys.exit(1)
 
     # query our library to make the dataset.
-    ds_artifact = dataset.create_dataset(example_image_paths, args.annotation_types)
+    ds_artifact = dataset.create_dataset(args.dataset_name, example_image_paths, args.annotation_types)
 
     # log the artifact to W&B.
-    run.log_artifact(ds_artifact, name=args.dataset_name)
+    run.log_artifact(ds_artifact)
 
 
 if __name__ == '__main__':

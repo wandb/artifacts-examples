@@ -25,7 +25,7 @@ def random_string(n):
     letters = string.ascii_lowercase
     return ''.join(random.choice(letters) for i in range(n))
 
-def create_dataset(example_image_paths, label_types):
+def create_dataset(name, example_image_paths, label_types):
     """Create a dataset artifact by querying our data library."""
 
     # query our data library to get all labels for the examples we
@@ -49,6 +49,7 @@ def create_dataset(example_image_paths, label_types):
     # metadata, for later querying.
     artifact = wandb.Artifact(
         type='dataset',
+        name=name,
         metadata= {
             'n_examples': len(example_paths),
             'annotation_types': label_types,
