@@ -1,5 +1,6 @@
 set -e
 
+mkdir -p demodata/coco
 cd demodata/coco 
 
 curl http://images.cocodataset.org/zips/val2017.zip > ./val2017.zip
