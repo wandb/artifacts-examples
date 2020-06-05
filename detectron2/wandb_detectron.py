@@ -34,7 +34,7 @@ def register_wandb_dataset(artifact_uri):
             logger.error('Can\'t use wandb dataset outside of run, please call wandb.init()')
             raise ValueError('wandb not initialized')
         artifact_alias = remove_prefix(artifact_uri, WANDB_ARTIFACT_PREFIX)
-        artifact = wandb.run.use_artifact(type='dataset', name=artifact_alias)
+        artifact = wandb.run.use_artifact(artifact_alias, type='dataset')
         if artifact is None:
             logger.error('Error: W&B dataset artifact doesn\'t exist')
             raise ValueError('Artifact doesn\'t exist')
@@ -120,7 +120,7 @@ class WandbCheckpointer(checkpoint.DetectionCheckpointer):
     def load(self, path: str, checkpointables = None) -> object:
         if path.startswith(WANDB_ARTIFACT_PREFIX):
             artifact_alias = remove_prefix(path, WANDB_ARTIFACT_PREFIX)
-            artifact = wandb.run.use_artifact(type='model', name=artifact_alias)
+            artifact = wandb.run.use_artifact(artifact_alias, type='model')
             if artifact is None:
                 raise ValueError('W&B model artifact doesn\'t exist')
             datadir = artifact.download()
@@ -132,15 +132,15 @@ class WandbCheckpointer(checkpoint.DetectionCheckpointer):
         else:
             name = path
             if path.startswith(DETECTRON2_PREFIX):
-                name = 'Detectron model zoo - %s' % remove_prefix(path, DETECTRON2_PREFIX)
-            name = name.replace(':', '_').replace('/', '_')
+                name = 'detectron2-model-zoo-%s' % remove_prefix(path, DETECTRON2_PREFIX)
+            name = name.replace(':', '_').replace('/', '_').replace(' ', '-')
 
             # pull the file using fvcore PathManager. It's going to get pulled again
             # by the checkpointer, so this is free.
             local_path = PathManager.get_local_path(path)
             # TODO: This is not uploading local_path for some reason.
             artifact = wandb.Artifact(type='model', name=name, metadata={
-                'reference': path,
+                'original_url': path,
                 'format': {'type': 'detectron_model'}
             })
             artifact.add_file(local_path)
@@ -236,7 +236,7 @@ class WandbModelSaveHook(HookBase):
             print('SAVING WITH IMPROVED', improved_metrics)
             artifact = wandb.Artifact(
                 type='model',
-                name='Trained by run - %s' % wandb.run.id,
+                name='run-%s-model' % wandb.run.id,
                 metadata={
                     'format': {'type': 'detectron_model'},
                     'training': {
@@ -274,7 +274,7 @@ class WandbModelSaveHook(HookBase):
                 print('SAVING FOR UNSAVED best', metric)
                 artifact = wandb.Artifact(
                     type='model',
-                    name='Trained by run - %s' % wandb.run.id,
+                    name='run-%s-model' % wandb.run.id,
                     metadata={
                         'format': {'type': 'detectron_model'},
                         'log_step': best_step

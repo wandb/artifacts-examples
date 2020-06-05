@@ -12,5 +12,5 @@ MODEL:
   RESNETS:
     DEPTH: 50
 DATASETS:
-  TRAIN: ("wandb-artifact://furniture small - train:latest",)
-  TEST: ("wandb-artifact://furniture small - val:latest",)
+  TRAIN: ("wandb-artifact://furniture-small-train:latest",)
+  TEST: ("wandb-artifact://furniture-small-val:latest",)

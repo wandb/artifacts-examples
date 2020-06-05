@@ -216,7 +216,7 @@ def main(args):
         for file in glob.glob(os.path.join(cfg.OUTPUT_DIR, 'inference', '*')):
             eval_artifact = wandb.Artifact(
                 type='result',
-                name='Run - %s - %s' % (run.id, os.path.basename(file)))
+                name='run-%s-%s' % (run.id, os.path.basename(file)))
             with eval_artifact.new_file('dataset.json') as f:
                 # TODO: we should use the URI for whatever our input artifact
                 #   ended up being, rather than what's passed in via test

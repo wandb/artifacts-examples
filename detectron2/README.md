@@ -44,7 +44,7 @@ python demo/subset_coco_dataset.py \
 
 # Now let's upload the dataset to Weights & Biases as an artifact.
 python create_dataset_coco_format.py \
-  "furniture small - train" \
+  "furniture-small-train" \
   ./furniture_subset_train.json \
   demo/demodata/coco/val2017
 
@@ -58,14 +58,14 @@ python demo/subset_coco_dataset.py \
 
 # And let's upload that dataset to Weights & Biases as an artifact.
 python create_dataset_coco_format.py \
-  "furniture small - val" \
+  "furniture-small-val" \
   ./furniture_subset_val.json \
   demo/demodata/coco/val2017
 ```
 
 You can go to your project page in W&B, and click the artifacts tab to find your datasets. You'll be able to see their versions (there should only be one for each dataset if this is a new project), and then inspect their contents by clicking through to the Files tab.
 
-TODO: put UI images here, and througout this example.
+TODO: put UI images here, and throughout this example.
 
 ### Training
 
@@ -96,7 +96,7 @@ From the project artifacts page, you can click through to the Graph tab for any 
 Let's evaluate one of our trained checkpoints, and save the results to W&B. First, find the name of the model trained by your run. It will look something like "Trained by run - 3huj5gkm". You can find it under the model type in the artifacts tab on your project page. Let's use the version that scored the best on the "best-bbox.AP" metric:
 
 ```
-export MODEL_ARTIFACT="wandb-artifact://Trained by run - 3huj5gkm:best-bbox.AP"
+export MODEL_ARTIFACT="wandb-artifact://run-1cxg5qfx-model:best-bbox.AP"
 ```
 
 Now you can evaluate that model on the same test set we used during training.
