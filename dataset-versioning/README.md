@@ -14,16 +14,7 @@ Download example data.
 ```
 sh download_coco_val.sh
 ```
-
-Special step for artifacts pilot: install wandb from the client repo pilot/artifacts branch.
-
-```
-pip uninstall wandb
-pip install https://github.com/wandb/client/archive/pilot/artifacts.zip
-```
-
 Install requirements and setup.
-
 ```
 pip install -r requirements.txt
 python demo_setup.py
