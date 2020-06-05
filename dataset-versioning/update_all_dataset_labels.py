@@ -32,7 +32,7 @@ def main(argv):
         print('Checking latest for dataset: %s' % d)
 
         # fetch the latest version of each dataset artifact and download it's contents
-        ds_artifact = run.use_artifact(type='dataset', name='%s:latest' % d.name)
+        ds_artifact = run.use_artifact('%s:latest' % d.name, type='dataset')
         labels = json.load(open(ds_artifact.get_path('labels.json').download()))
         example_paths = set(l['image_path'] for l in labels)
 

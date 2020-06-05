@@ -27,7 +27,7 @@ def main(argv):
     run.config.update(args)
 
     # Get the artifact from W&B and mark it as input to this run.
-    ds_artifact = run.use_artifact(type='dataset', name=args.dataset)
+    ds_artifact = run.use_artifact(args.dataset, type='dataset')
     if args.model_type not in ds_artifact.metadata['annotation_types']:
         print('Dataset %s has annotations %s, can\'t train model type: %s' % (
             args.dataset, ds_artifact.metadata['annotation_types'], args.model_type))
