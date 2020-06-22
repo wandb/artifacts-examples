@@ -1,7 +1,5 @@
 # Detectron2 + Weights & Biases
 
-*W&B Artifacts is currently in the pilot phase, as we work with customers to refine the APIs and experience.*
-
 Build image models on your own datasets, with complete tracking and dataset management.
 
 Using the code in this repo you can:
