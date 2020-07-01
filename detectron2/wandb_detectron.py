@@ -116,7 +116,6 @@ class WandbCheckpointer(checkpoint.DetectionCheckpointer):
     def save(self, name: str, **kwargs) -> None:
         super().save(name, **kwargs)
 
-
     def load(self, path: str, checkpointables = None) -> object:
         if path.startswith(WANDB_ARTIFACT_PREFIX):
             artifact_alias = remove_prefix(path, WANDB_ARTIFACT_PREFIX)

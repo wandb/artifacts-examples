@@ -5,3 +5,4 @@ bucket/
 model.json
 seg.json
 wandb/
+artifacts
