@@ -28,7 +28,7 @@ def main(argv):
 
     # iterate through all the datasets we have.
     dataset_type = api.artifact_type('dataset')
-    for d in dataset_type.artifact_collections():
+    for d in dataset_type.collections():
         print('Checking latest for dataset: %s' % d)
 
         # fetch the latest version of each dataset artifact and download it's contents
