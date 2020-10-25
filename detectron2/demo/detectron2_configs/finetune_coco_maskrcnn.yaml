@@ -3,12 +3,12 @@ SOLVER:
   CHECKPOINT_PERIOD: 100
   MAX_ITER: 600
   IMS_PER_BATCH: 4
+  BASE_LR: 0.000025
 VIS_PERIOD: 100
 TEST:
   EVAL_PERIOD: 200
 MODEL:
   WEIGHTS: https://dl.fbaipublicfiles.com/detectron2/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x/137260431/model_final_a54504.pkl
-  MASK_ON: True
   RESNETS:
     DEPTH: 50
 DATASETS:

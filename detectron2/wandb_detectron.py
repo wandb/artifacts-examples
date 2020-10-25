@@ -10,6 +10,7 @@ from detectron2.data.datasets.coco import load_coco_json
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.engine.hooks import HookBase
 from detectron2 import checkpoint
+from detectron2.structures import BoxMode
 from fvcore.common.file_io import PathManager
 
 import wandb
@@ -22,8 +23,10 @@ DETECTRON2_PREFIX = 'detectron2://'
 
 logger = logging.getLogger(__name__)
 
+
 def remove_prefix(from_string, prefix):
     return from_string[len(prefix):]
+
 
 def register_wandb_dataset(artifact_uri):
     if DatasetCatalog._REGISTERED.get(artifact_uri):
@@ -31,7 +34,8 @@ def register_wandb_dataset(artifact_uri):
 
     def use_artifact():
         if wandb.run is None:
-            logger.error('Can\'t use wandb dataset outside of run, please call wandb.init()')
+            logger.error(
+                'Can\'t use wandb dataset outside of run, please call wandb.init()')
             raise ValueError('wandb not initialized')
         artifact_alias = remove_prefix(artifact_uri, WANDB_ARTIFACT_PREFIX)
         artifact = wandb.run.use_artifact(artifact_alias, type='dataset')
@@ -61,6 +65,59 @@ def register_wandb_dataset(artifact_uri):
                 json_file=json_file_path, image_root=image_root, evaluator_type="coco", **metadata
             )
             return load_coco_json(json_file_path, image_root, artifact_alias)
+        elif format_type == 'wandb-table':
+            table_file_path = os.path.join(
+                datadir, artifact.metadata['format']['path'])
+            table_data = json.load(open(table_file_path))
+            col_index = table_data['columns'].index(
+                artifact.metadata['format']['column'])
+            if col_index == -1:
+                raise ValueError('invalid column')
+
+            first_wb_image = table_data['data'][0][col_index]
+            classes_path = os.path.join(
+                datadir, first_wb_image['classes']['path'])
+            classes = json.load(open(classes_path))['class_set']
+            thing_dataset_id_to_contiguous_id = {
+                c["id"]: i for i, c in enumerate(classes)}
+
+            dataset_dicts = []
+            for row in table_data['data']:
+                wb_image = row[col_index]
+                dataset_dicts.append({
+                    # TODO: using path... we should figure out how to handle
+                    #     actual IDs
+                    'image_id': wb_image['path'],
+                    'file_name': os.path.join(datadir, wb_image['path']),
+                    'width': wb_image['width'],
+                    'height': wb_image['height'],
+                    # TODO 'ground_truth' hardcoded...
+                    'annotations': [
+                        {
+                            'category_id': thing_dataset_id_to_contiguous_id[
+                                box['class_id']],
+                            'bbox': [
+                                box['position']['minX'],
+                                box['position']['minY'],
+                                box['position']['maxX'],
+                                box['position']['maxY']
+                            ],
+                            'bbox_mode': BoxMode.XYXY_ABS
+                        }
+                        for box in
+                        wb_image['boxes']['ground_truth']]
+                })
+
+            metadata = {
+                'evaluator_type': "coco",
+                'thing_dataset_id_to_contiguous_id':
+                    thing_dataset_id_to_contiguous_id,
+                'thing_classes': [c["name"] for c in classes]
+            }
+            print('METADATA', metadata)
+            MetadataCatalog.get(artifact_uri).set(**metadata)
+
+            return dataset_dicts
         else:
             raise ValueError('Unknown artifact format_type')
 
@@ -68,12 +125,14 @@ def register_wandb_dataset(artifact_uri):
     # call run.use_artifact() on that at fetch time.
     DatasetCatalog.register(artifact_uri, use_artifact)
 
+
 def wandb_register_artifact_datasets(cfg):
     DATASETS = cfg.DATASETS
     all_datasets = DATASETS.TRAIN + DATASETS.TEST
     for ds_name in all_datasets:
         if ds_name.startswith(WANDB_ARTIFACT_PREFIX):
             register_wandb_dataset(ds_name)
+
 
 class WandbWriter(EventWriter):
     """
@@ -106,7 +165,8 @@ class WandbWriter(EventWriter):
             # parse the image name, or send a patch to detectron
             for img_name, img, step_num in storage.vis_data:
                 img = torch.tensor(img)
-                log_dict[img_name] = wandb.Image(img.permute(1, 2, 0).cpu().numpy())
+                log_dict[img_name] = wandb.Image(
+                    img.permute(1, 2, 0).cpu().numpy())
             storage.clear_images()
 
         wandb.log(log_dict, step=storage.iter)
@@ -116,7 +176,7 @@ class WandbCheckpointer(checkpoint.DetectionCheckpointer):
     def save(self, name: str, **kwargs) -> None:
         super().save(name, **kwargs)
 
-    def load(self, path: str, checkpointables = None) -> object:
+    def load(self, path: str, checkpointables=None) -> object:
         if path.startswith(WANDB_ARTIFACT_PREFIX):
             artifact_alias = remove_prefix(path, WANDB_ARTIFACT_PREFIX)
             artifact = wandb.run.use_artifact(artifact_alias, type='model')
@@ -125,13 +185,15 @@ class WandbCheckpointer(checkpoint.DetectionCheckpointer):
             datadir = artifact.download()
             files = glob.glob(os.path.join(datadir, '*.pth'))
             if len(files) > 1:
-                raise ValueError('Expected a single .pth file in model artifact')
+                raise ValueError(
+                    'Expected a single .pth file in model artifact')
             # transform path to local path
             path = files[0]
         else:
             name = path
             if path.startswith(DETECTRON2_PREFIX):
-                name = 'detectron2-model-zoo-%s' % remove_prefix(path, DETECTRON2_PREFIX)
+                name = 'detectron2-model-zoo-%s' % remove_prefix(
+                    path, DETECTRON2_PREFIX)
             name = name.replace(':', '_').replace('/', '_').replace(' ', '-')
 
             # pull the file using fvcore PathManager. It's going to get pulled again
@@ -147,8 +209,10 @@ class WandbCheckpointer(checkpoint.DetectionCheckpointer):
 
         return super().load(path, checkpointables)
 
+
 UP_IS_BETTER = 'up'
 DOWN_IS_BETTER = 'down'
+
 
 class WandbModelSaveHook(HookBase):
     def __init__(self, output_dir, metric_directions, checkpoint_period, eval_period, save_period):
@@ -156,20 +220,23 @@ class WandbModelSaveHook(HookBase):
         #     walk through to the checkpointer to figure out file names for example?
         self._output_dir = output_dir
         if eval_period / checkpoint_period != int(eval_period / checkpoint_period):
-            raise ValueError('eval_period is not a multiple of checkpoint_period')
+            raise ValueError(
+                'eval_period is not a multiple of checkpoint_period')
         self._checkpoint_period = checkpoint_period
         self._eval_period = eval_period
         # TODO Are config values none if not defined?
         if (save_period is not None
                 and save_period / checkpoint_period != int(save_period / checkpoint_period)):
-            raise ValueError('save_period is not a multiple of checkpoint_period')
+            raise ValueError(
+                'save_period is not a multiple of checkpoint_period')
         self._save_period = save_period
         if len(metric_directions) == 0:
             raise ValueError('you must pass at least one metric direction')
         self._metric_directions = metric_directions
         for metric, direction in self._metric_directions.items():
             if direction != UP_IS_BETTER and direction != DOWN_IS_BETTER:
-                raise ValueError('metric_direction values must be UP_IS_BETTER or DOWN_IS_BETTER')
+                raise ValueError(
+                    'metric_direction values must be UP_IS_BETTER or DOWN_IS_BETTER')
 
         self._best_metrics = {}
         self._best_steps = {}
@@ -179,7 +246,8 @@ class WandbModelSaveHook(HookBase):
         components = key.split('.')
         for comp in components:
             if comp not in eval_results:
-                raise ValueError('eval results don\'t contain metric: %s' % metric)
+                raise ValueError(
+                    'eval results don\'t contain metric: %s' % metric)
             eval_results = eval_results[comp]
         if type(eval_results) != float:
             raise ValueError('metric value most be float for key: %s' % key)
@@ -187,7 +255,7 @@ class WandbModelSaveHook(HookBase):
 
     def _metric_alias(self, metric):
         return ('best-%s' % metric).replace('/', '_').replace('\\', '_')
-    
+
     def after_step(self):
         next_iter = self.trainer.iter + 1
         is_final = next_iter == self.trainer.max_iter
@@ -202,12 +270,15 @@ class WandbModelSaveHook(HookBase):
         last_eval_results = self.trainer._last_eval_results
 
         # TODO: we're assuming the checkpointer output locations
-        last_checkpoint_filename = open(os.path.join(self._output_dir, 'last_checkpoint')).read()
-        checkpoint_file = os.path.join(self._output_dir, last_checkpoint_filename)
+        last_checkpoint_filename = open(os.path.join(
+            self._output_dir, 'last_checkpoint')).read()
+        checkpoint_file = os.path.join(
+            self._output_dir, last_checkpoint_filename)
 
         improved_metrics = []
         for metric, direction in self._metric_directions.items():
-            last_metric_val = self._get_metric_from_eval_results(last_eval_results, metric)
+            last_metric_val = self._get_metric_from_eval_results(
+                last_eval_results, metric)
             best_metric_val = self._best_metrics.get(metric)
             if (best_metric_val is None or
                     direction == UP_IS_BETTER and last_metric_val > best_metric_val or
@@ -215,16 +286,28 @@ class WandbModelSaveHook(HookBase):
                 improved_metrics.append(metric)
                 self._best_metrics[metric] = last_metric_val
 
-                model_metric_dir = os.path.join(self._output_dir, self._metric_alias(metric))
+                model_metric_dir = os.path.join(
+                    self._output_dir, self._metric_alias(metric))
                 os.makedirs(model_metric_dir, exist_ok=True)
 
-                shutil.copy(checkpoint_file, os.path.join(model_metric_dir, 'model.pth'))
-                json.dump(last_eval_results, open(os.path.join(model_metric_dir, 'metrics.json'), 'w'))
+                shutil.copy(checkpoint_file, os.path.join(
+                    model_metric_dir, 'model.pth'))
+                json.dump(last_eval_results, open(
+                    os.path.join(model_metric_dir, 'metrics.json'), 'w'))
 
-                metric_inference_dir = os.path.join(model_metric_dir, 'inference') 
+                metric_inference_dir = os.path.join(
+                    model_metric_dir, 'inference')
                 os.makedirs(metric_inference_dir, exist_ok=True)
                 for inference_file in glob.glob(os.path.join(self._output_dir, 'inference', '*')):
-                    shutil.copy(inference_file, metric_inference_dir)
+                    try:
+                        shutil.copy(inference_file, metric_inference_dir)
+                    except IsADirectoryError:
+                        # this happens because the COCOEvaluator converts
+                        # our detectron formatted dataset to a coco formatted
+                        # dataset, saving it under the dataset name, which
+                        # in our case is a uri that contains / (which
+                        # inadvertently creates a directory)
+                        pass
 
         for metric in improved_metrics:
             self._best_steps[metric] = self.trainer.iter
@@ -245,7 +328,7 @@ class WandbModelSaveHook(HookBase):
                 })
             artifact.add_file(checkpoint_file, 'model.pth')
             wandb.run.log_artifact(artifact,
-                aliases=[self._metric_alias(m) for m in improved_metrics])
+                                   aliases=[self._metric_alias(m) for m in improved_metrics])
 
             # Create an evaluation run that uses this artifact as input and generates
             # eval results.
@@ -283,4 +366,4 @@ class WandbModelSaveHook(HookBase):
                 # the backend logic correctly merge the aliases?
                 artifact.add_file(checkpoint_file, 'model.pth')
                 wandb.run.log_artifact(artifact,
-                    aliases=[self._metric_alias(m) for m in improved_metrics])
+                                       aliases=[self._metric_alias(m) for m in improved_metrics])

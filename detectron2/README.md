@@ -3,6 +3,7 @@
 Build image models on your own datasets, with complete tracking and dataset management.
 
 Using the code in this repo you can:
+
 - Store and version your datasets using Weights & Biases
 - Train Detectron2 models for image segmentation or bounding box prediction on W&B datasets
 - Visualize training metrics & predictions in real-time
@@ -23,6 +24,7 @@ cd demodata && ./download_coco_val.sh
 ```
 
 Then, let's initialize a Weights & Biases project in this directory
+
 ```
 wandb init
 ```
@@ -35,7 +37,6 @@ Next, let's upload a couple dataset artifacts to Weights & Biases.
 # Let's just train on examples of furniture. This creates a subset containing
 # 20% of the furniture examples in the COCO validation set.
 python demo/subset_coco_dataset.py \
-  --supercategories=furniture \
   --select_fraction=0.2 \
   demo/demodata/coco/annotations/instances_val2017.json \
   furniture_subset_train.json
@@ -48,7 +49,6 @@ python create_dataset_coco_format.py \
 
 # Then we'll create a subset containing a different 10% of the furniture examples.
 python demo/subset_coco_dataset.py \
-  --supercategories=furniture \
   --after_fraction=0.2 \
   --select_fraction=0.1 \
   demo/demodata/coco/annotations/instances_val2017.json \
@@ -88,7 +88,6 @@ You can go to the W&B run page for your training run, to watch its metrics as it
 
 From the project artifacts page, you can click through to the Graph tab for any of the artifacts used in this training run, to see a graph of the relationships just created.
 
-
 ### Evaluation
 
 Let's evaluate one of our trained checkpoints, and save the results to W&B. First, find the name of the model trained by your run. It will look something like "Trained by run - 3huj5gkm". You can find it under the model type in the artifacts tab on your project page. Let's use the version that scored the best on the "best-bbox.AP" metric:
@@ -110,7 +109,6 @@ Now you can evaluate that model on the same test set we used during training.
 
 In the UI, you can browse to the evaluation artifact just created, and look at its metadata to see the computed metrics.
 
-
 ### Visualize
 
 Visualize some results locally (you can do this on any machine that has access to W&B). (TODO: build this into the UI)
@@ -120,7 +118,6 @@ Visualize some results locally (you can do this on any machine that has access t
 # TODO: this doesn't render results nicely currently.
 python visualize_predictions.py  "Run - 1wtgfa12 - instances_predictions.pth:v0"
 ```
-
 
 ### Fine-tune your own trained model
 
@@ -133,7 +130,6 @@ python wandb_train_net.py \
 ```
 
 If you browse to the Graph tab on the model we just fine-tuned, you'll see both stages of fine-tuning.
-
 
 ### TODO
 

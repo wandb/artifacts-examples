@@ -78,9 +78,11 @@ class DefaultTrainNetTrainer(DefaultTrainer):
                 )
             )
         if evaluator_type in ["coco", "coco_panoptic_seg"]:
-            evaluator_list.append(COCOEvaluator(dataset_name, cfg, True, output_folder))
+            evaluator_list.append(COCOEvaluator(
+                dataset_name, cfg, True, output_folder))
         if evaluator_type == "coco_panoptic_seg":
-            evaluator_list.append(COCOPanopticEvaluator(dataset_name, output_folder))
+            evaluator_list.append(COCOPanopticEvaluator(
+                dataset_name, output_folder))
         elif evaluator_type == "cityscapes":
             assert (
                 torch.cuda.device_count() >= comm.get_rank()
@@ -109,7 +111,8 @@ class DefaultTrainNetTrainer(DefaultTrainer):
         model = GeneralizedRCNNWithTTA(cfg, model)
         evaluators = [
             cls.build_evaluator(
-                cfg, name, output_folder=os.path.join(cfg.OUTPUT_DIR, "inference_TTA")
+                cfg, name, output_folder=os.path.join(
+                    cfg.OUTPUT_DIR, "inference_TTA")
             )
             for name in cfg.DATASETS.TEST
         ]
@@ -125,7 +128,8 @@ class WandbTrainer(DefaultTrainNetTrainer):
             cfg (CfgNode):
         """
         logger = logging.getLogger("detectron2")
-        if not logger.isEnabledFor(logging.INFO):  # setup_logger is not called for d2
+        # setup_logger is not called for d2
+        if not logger.isEnabledFor(logging.INFO):
             setup_logger()
         # Assume these objects must be constructed in this order.
         model = self.build_model(cfg)
@@ -197,6 +201,7 @@ def setup(args):
     default_setup(cfg, args)
     return cfg
 
+
 def main(args):
     cfg = setup(args)
 
@@ -213,19 +218,85 @@ def main(args):
             res.update(WandbTrainer.test_with_TTA(cfg, model))
         if comm.is_main_process():
             verify_results(cfg, res)
-        for file in glob.glob(os.path.join(cfg.OUTPUT_DIR, 'inference', '*')):
-            eval_artifact = wandb.Artifact(
-                type='result',
-                name='run-%s-%s' % (run.id, os.path.basename(file)))
-            with eval_artifact.new_file('dataset.json') as f:
-                # TODO: we should use the URI for whatever our input artifact
-                #   ended up being, rather than what's passed in via test
-                # TODO: This writes an array, because there can be more than one
-                #   test dataset. How should we handle that case?
-                # TODO: standardize how to do this.
-                json.dump({'dataset_artifact': cfg.DATASETS.TEST}, f)
-            eval_artifact.add_file(file)
-            wandb.run.log_artifact(eval_artifact)
+
+        ds_artifact_name = wandb_detectron.remove_prefix(cfg.DATASETS.TEST[0],
+                                                         wandb_detectron.WANDB_ARTIFACT_PREFIX)
+        dataset_artifact = wandb.run.use_artifact(ds_artifact_name)
+        datadir = dataset_artifact.download()
+
+        metadata = MetadataCatalog.get(cfg.DATASETS.TEST[0])
+        if hasattr(metadata, 'thing_dataset_id_to_contiguous_id'):
+            reverse_id_mapping = {
+                v: k for k, v in metadata.thing_dataset_id_to_contiguous_id.items()
+            }
+            def get_original_class_id(x): return reverse_id_mapping[x]
+        else:
+            def get_original_class_id(x): return x
+
+        eval_artifact = wandb.Artifact(
+            type='result',
+            name='run-%s-preds' % run.id,
+            metadata=res)
+
+        eval_artifact.add_file(os.path.join(datadir, 'classes.json'))
+
+        # TODO: this is a hack until we have have cross-artifact references
+        eval_artifact.add_file(os.path.join(datadir, 'dataset.table.json'))
+
+        example_preds = torch.load(
+            os.path.join(cfg.OUTPUT_DIR, 'inference', 'instances_predictions.pth'))
+        table = wandb.Table(['preds'])
+        for example_pred in example_preds:
+            image_path = os.path.join(datadir, example_pred['image_id'])
+            boxes = []
+            for instance in example_pred['instances']:
+                box = instance['bbox']
+                boxes.append({
+                    'domain': 'pixel',
+                    'position': {
+                        'minX': box[0],
+                        'maxX': box[0] + box[2],
+                        'minY': box[1],
+                        'maxY': box[1] + box[3]
+                    },
+                    'scores': {
+                        'score': instance['score']
+                    },
+                    'class_id': get_original_class_id(instance['category_id'])
+                })
+            wandb_image = wandb.Image(image_path,
+                                      boxes={
+                                          'preds': {
+                                              'box_data': boxes
+                                          }
+                                      },
+                                      classes={
+                                          'path': 'classes.json'
+                                      })
+            table.add_data(wandb_image)
+        eval_artifact.add(table, 'preds.table.json')
+        eval_artifact.add(wandb.JoinedTable(
+            'dataset.table.json', 'preds.table.json', 'path'),
+            'preds.joined-table.json')
+        wandb.run.log_artifact(eval_artifact)
+
+        # for file in glob.glob(os.path.join(cfg.OUTPUT_DIR, 'inference', '*')):
+        #     if not os.path.isfile(file):
+        #         continue
+        #     eval_artifact = wandb.Artifact(
+        #         type='result',
+        #         name='run-%s-%s' % (run.id, os.path.basename(file)),
+        #         metadata=res)
+        #     with eval_artifact.new_file('dataset.json') as f:
+        #         # TODO: we should use the URI for whatever our input artifact
+        #         #   ended up being, rather than what's passed in via test
+        #         # TODO: This writes an array, because there can be more than one
+        #         #   test dataset. How should we handle that case?
+        #         # TODO: standardize how to do this.
+        #         json.dump({'dataset_artifact': cfg.DATASETS.TEST}, f)
+        #     eval_artifact.add_file(file)
+        #     wandb.run.log_artifact(eval_artifact)
+        wandb.run.log(res)
         return res
 
     """
@@ -239,7 +310,8 @@ def main(args):
     trainer.resume_or_load(resume=args.resume)
     if cfg.TEST.AUG.ENABLED:
         trainer.register_hooks(
-            [hooks.EvalHook(0, lambda: trainer.test_with_TTA(cfg, trainer.model))]
+            [hooks.EvalHook(
+                0, lambda: trainer.test_with_TTA(cfg, trainer.model))]
         )
     return trainer.train()
 
