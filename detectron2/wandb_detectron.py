@@ -29,8 +29,12 @@ def remove_prefix(from_string, prefix):
 
 
 def register_wandb_dataset(artifact_uri):
-    if DatasetCatalog._REGISTERED.get(artifact_uri):
+    try:
+        # already registered, don't register again!
+        DatasetCatalog.get(artifact_uri)
         return
+    except KeyError:
+        pass
 
     def use_artifact():
         if wandb.run is None:
@@ -159,11 +163,11 @@ class WandbWriter(EventWriter):
         for k, v in storage.latest_with_smoothing_hint(self._window_size).items():
             log_dict[k] = v
 
-        if len(storage.vis_data) >= 1:
+        if len(storage._vis_data) >= 1:
             # TODO: mask_head logs images with indexes in the name like (23), so it
             # generates a lot of keys per step. We should fix that. Might need to
             # parse the image name, or send a patch to detectron
-            for img_name, img, step_num in storage.vis_data:
+            for img_name, img, step_num in storage._vis_data:
                 img = torch.tensor(img)
                 log_dict[img_name] = wandb.Image(
                     img.permute(1, 2, 0).cpu().numpy())
