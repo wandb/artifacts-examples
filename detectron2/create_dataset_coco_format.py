@@ -46,10 +46,16 @@ def main(argv):
     with artifact.new_file('detectron2_metadata.json') as f:
         json.dump(detectron2_metadata, f)
 
+    columns = list(images[0].keys())
+    table = wandb.Table(columns = columns + ["image"])
     for image in images:
         image_path = os.path.join(args.image_dir, image['file_name'])
         artifact.add_file(image_path, name='/'.join(('images', image['file_name'])))
+        table.add_data(*[
+            image[key] for key in columns
+        ] + [wandb.Image(image_path)])
 
+    artifact.add(table, "{}_table".format(args.name))
     run.log_artifact(artifact)
 
 
