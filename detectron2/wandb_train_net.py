@@ -242,10 +242,11 @@ def main(args):
             name='run-%s-preds' % run.id,
             metadata=res)
 
-        eval_artifact.add_file(os.path.join(datadir, 'classes.json'))
+        # eval_artifact.add_file(os.path.join(datadir, 'classes.json'))
 
         # TODO: this is a hack until we have have cross-artifact references
-        eval_artifact.add_file(os.path.join(datadir, 'dataset.table.json'))
+        # eval_artifact.add_file(os.path.join(datadir, 'dataset.table.json'))
+        eval_artifact.add(dataset_artifact.get("{}_table".join(ds_artifact_name)))
 
         example_preds = torch.load(
             os.path.join(cfg.OUTPUT_DIR, 'inference', 'instances_predictions.pth'))
