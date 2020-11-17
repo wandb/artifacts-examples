@@ -20,7 +20,7 @@ After installation, the first thing you'll need to do is upload a dataset to W&B
 ### Setup
 
 ```
-cd demodata && ./download_coco_val.sh
+cd demo && ./download_coco_val.sh
 ```
 
 Then, let's initialize a Weights & Biases project in this directory
