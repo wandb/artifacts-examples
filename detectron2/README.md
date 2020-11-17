@@ -26,6 +26,11 @@ cd demo && ./download_coco_val.sh
 Then, let's initialize a Weights & Biases project in this directory
 
 ```
+pip install wandb torch torchvision opencv-python
+```
+
+
+```
 wandb init
 ```
 
@@ -68,6 +73,8 @@ TODO: put UI images here, and throughout this example.
 ### Training
 
 Great! Now let's fine-tune a Detectron2 model on our dataset.
+
+First, let's install Detectron2: https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md. 
 
 First let's take a look at the config file we're going to use: `./demo/detectron2_configs/finetune_coco_maskrcnn.yaml`. The first part of the config tells detectron2 to use the base config "Base-RCNN-FPN.yaml" which let's us train a maskrcnn model. The SOLVER, VIS_PERIOD, and TEST stanzas tell detectron2 to train for 600 steps, save local checkpoints every 100 steps, and perform evaluation every 200 steps, saving the best checkpoints for the bbox.AP metric to W&B.
 
