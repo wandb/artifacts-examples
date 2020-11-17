@@ -126,50 +126,50 @@ class DefaultTrainNetTrainer(DefaultTrainer):
 
 
 class WandbTrainer(DefaultTrainNetTrainer):
-    def __init__(self, cfg):
-        """
-        Args:
-            cfg (CfgNode):
-        """
-        logger = logging.getLogger("detectron2")
-        # setup_logger is not called for d2
-        if not logger.isEnabledFor(logging.INFO):
-            setup_logger()
-        # Assume these objects must be constructed in this order.
-        model = self.build_model(cfg)
-        optimizer = self.build_optimizer(cfg, model)
-        data_loader = self.build_train_loader(cfg)
+    # def __init__(self, cfg):
+    #     """
+    #     Args:
+    #         cfg (CfgNode):
+    #     """
+    #     logger = logging.getLogger("detectron2")
+    #     # setup_logger is not called for d2
+    #     if not logger.isEnabledFor(logging.INFO):
+    #         setup_logger()
+    #     # Assume these objects must be constructed in this order.
+    #     model = self.build_model(cfg)
+    #     optimizer = self.build_optimizer(cfg, model)
+    #     data_loader = self.build_train_loader(cfg)
 
-        # For training, wrap with DDP. But don't need this for inference.
-        if comm.get_world_size() > 1:
-            model = DistributedDataParallel(
-                model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
-            )
+    #     # For training, wrap with DDP. But don't need this for inference.
+    #     if comm.get_world_size() > 1:
+    #         model = DistributedDataParallel(
+    #             model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
+    #         )
 
-        # Note: we're not calling super here, because we want to skip DefaultTrainer's init.
-        # TODO: Fix? To fix this we need to get rid of DefaultTrainer entirely. We could still
-        #   delegate to it's methods, by assinging them to our methods.
-        SimpleTrainer.__init__(self, model, data_loader, optimizer)
+    #     # Note: we're not calling super here, because we want to skip DefaultTrainer's init.
+    #     # TODO: Fix? To fix this we need to get rid of DefaultTrainer entirely. We could still
+    #     #   delegate to it's methods, by assinging them to our methods.
+    #     SimpleTrainer.__init__(self, model, data_loader, optimizer)
 
-        self.scheduler = self.build_lr_scheduler(cfg, optimizer)
-        # Assume no other objects need to be checkpointed.
-        # We can later make it checkpoint the stateful hooks
+    #     self.scheduler = self.build_lr_scheduler(cfg, optimizer)
+    #     # Assume no other objects need to be checkpointed.
+    #     # We can later make it checkpoint the stateful hooks
 
-        # Use wandb checkpointer instead of fvcore checkpointer. This checkpointer
-        # automatically makes an input artifact reference for the loaded model
-        self.checkpointer = wandb_detectron.WandbCheckpointer(
-            # Assume you want to save checkpoints together with logs/statistics
-            model,
-            cfg.OUTPUT_DIR,
-            optimizer=optimizer,
-            scheduler=self.scheduler,
-        )
+    #     # Use wandb checkpointer instead of fvcore checkpointer. This checkpointer
+    #     # automatically makes an input artifact reference for the loaded model
+    #     self.checkpointer = wandb_detectron.WandbCheckpointer(
+    #         # Assume you want to save checkpoints together with logs/statistics
+    #         model,
+    #         cfg.OUTPUT_DIR,
+    #         optimizer=optimizer,
+    #         scheduler=self.scheduler,
+    #     )
 
-        self.start_iter = 0
-        self.max_iter = cfg.SOLVER.MAX_ITER
-        self.cfg = cfg
+    #     self.start_iter = 0
+    #     self.max_iter = cfg.SOLVER.MAX_ITER
+    #     self.cfg = cfg
 
-        self.register_hooks(self.build_hooks())
+    #     self.register_hooks(self.build_hooks())
 
     def build_writers(self):
         # Add wandb writer to save training metrics
