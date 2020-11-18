@@ -248,7 +248,7 @@ def main(args):
         # eval_artifact.add_file(os.path.join(datadir, 'dataset.table.json'))
         # eval_artifact.add(dataset_artifact.get("{}_table".format(ds_artifact_name)),)
         original_table = dataset_artifact.get("{}_table".join(ds_artifact_name))
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         example_preds = torch.load(
             os.path.join(cfg.OUTPUT_DIR, 'inference', 'instances_predictions.pth'))
         table = wandb.Table(['preds', 'id'])
@@ -271,7 +271,7 @@ def main(args):
                     },
                     'class_id': get_original_class_id(instance['category_id'])
                 })
-            wandb_image = wandb.Image(dataset_artifact.get(image_path),
+            wandb_image = wandb.Image(dataset_artifact.get_path(image_path).download(),
                 boxes={
                     'preds': {
                         'box_data': boxes
