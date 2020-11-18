@@ -53,7 +53,7 @@ def register_wandb_dataset(artifact_uri):
             raise ValueError('Artifact missing metadata.format.type')
         datadir = artifact.download()
         format_type = artifact.metadata['format']['type']
-        if format_type == 'coco_dataset_json':
+        if format_type == 'coco_dataset_json' or format_type == "unified":
             json_file_path = os.path.join(datadir, 'annotations.json')
             image_root = os.path.join(datadir, 'images/')
 
