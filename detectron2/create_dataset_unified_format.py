@@ -73,7 +73,7 @@ def main(argv):
 
     # Create a run, an artfact, a class object, and a table
     run = wandb.init(job_type='create-dataset')
-    artifact = wandb.Artifact(type='dataset', name=args.name)
+    artifact = wandb.Artifact(type='dataset', name=args.name, metadata={'format': {'type': 'unified'}})
     with artifact.new_file('detectron2_metadata.json') as f:
         json.dump(detectron2_metadata, f)
     artifact.add_file(subset_json_path, name='annotations.json')
