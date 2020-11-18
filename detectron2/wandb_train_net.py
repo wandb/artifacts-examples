@@ -276,7 +276,7 @@ def main(args):
                     'preds': {
                         'box_data': boxes
                     }
-                }
+                })
             table.add_data([wandb_image, id_str])
         # eval_artifact.add(table, 'pred_table')
         eval_artifact.add(wandb.JoinedTable(original_table, table, "id"), "joined_prediction_table")
