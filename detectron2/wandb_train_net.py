@@ -247,7 +247,7 @@ def main(args):
         # TODO: this is a hack until we have have cross-artifact references
         # eval_artifact.add_file(os.path.join(datadir, 'dataset.table.json'))
         # eval_artifact.add(dataset_artifact.get("{}_table".format(ds_artifact_name)),)
-        original_table = dataset_artifact.get("{}_table".join(ds_artifact_name))
+        original_table = dataset_artifact.get("furniture-small-val_table")
         example_preds = torch.load(
             os.path.join(cfg.OUTPUT_DIR, 'inference', 'instances_predictions.pth'))
         table = wandb.Table(['preds', 'id'])

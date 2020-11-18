@@ -55,7 +55,7 @@ def main(argv):
             image[key] for key in columns
         ] + [wandb.Image(image_path)])
 
-    artifact.add(table, "{}_table".format(args.name))
+    artifact.add(table, "data_table")
     run.log_artifact(artifact)
 
 

@@ -40,9 +40,9 @@ def main(argv):
 
     class_set = wandb.Classes(
         [{'name': c['name'], 'id': c['id']} for c in cats])
-    art.add(class_set, 'classes.json')
+    # art.add(class_set, 'classes.json')
 
-    table = wandb.Table(['ground_truth'])
+    table = wandb.Table(['image_id', 'ground_truth'])
     for image in images:
         image_path = os.path.join(args.image_dir, image['file_name'])
         anns = dataset.loadAnns(dataset.getAnnIds(imgIds=[image['id']]))
@@ -60,16 +60,14 @@ def main(argv):
                 'class_id': ann['category_id']
             })
         wandb_image = wandb.Image(image_path,
-                                  boxes={
-                                      'ground_truth': {
-                                          'box_data': boxes
-                                      }
-                                  },
-                                  classes={
-                                      'path': 'classes.json'
-                                  })
+            boxes={
+                'ground_truth': {
+                    'box_data': boxes
+                }
+            },
+            classes=class_set)
         table.add_data(wandb_image)
-    art.add(table, 'dataset.table.json')
+    art.add(table, 'dataset')
 
     run.log_artifact(art)
 
