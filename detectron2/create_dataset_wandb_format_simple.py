@@ -57,7 +57,7 @@ def main(argv):
                 'ground_truth': {
                     'box_data': boxes
                 }
-            }
+            })
 
         # Add a row to the table
         table.add_data(image['id'], wandb_image)
