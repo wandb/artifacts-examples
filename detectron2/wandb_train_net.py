@@ -248,7 +248,6 @@ def main(args):
         # eval_artifact.add_file(os.path.join(datadir, 'dataset.table.json'))
         # eval_artifact.add(dataset_artifact.get("{}_table".format(ds_artifact_name)),)
         original_table = dataset_artifact.get("{}_table".join(ds_artifact_name))
-        # import pdb; pdb.set_trace()
         example_preds = torch.load(
             os.path.join(cfg.OUTPUT_DIR, 'inference', 'instances_predictions.pth'))
         table = wandb.Table(['preds', 'id'])
@@ -279,6 +278,7 @@ def main(args):
                 })
             table.add_data(wandb_image, id_str)
         # eval_artifact.add(table, 'pred_table')
+        import pdb; pdb.set_trace()
         eval_artifact.add(wandb.JoinedTable(original_table, table, "id"), "joined_prediction_table")
             # 'dataset.table.json', 'preds.table.json', 'path'),
             # 'preds.joined-table.json')
