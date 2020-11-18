@@ -251,40 +251,66 @@ def main(args):
         example_preds = torch.load(
             os.path.join(cfg.OUTPUT_DIR, 'inference', 'instances_predictions.pth'))
         table = wandb.Table(['preds', 'id'])
-        pred_by_id = {
-            example_pred['image_id']: example_pred
-            for example_pred in example_preds
-        }
-        import pdb; pdb.set_trace()
-        for example_pred in example_preds:
-            id_str = str(example_pred['image_id'])
-            image_path = os.path.join("images", "000000{}.jpg".format(id_str))
-            boxes = []
-            for instance in example_pred['instances']:
-                box = instance['bbox']
-                boxes.append({
-                    'domain': 'pixel',
-                    'position': {
-                        'minX': box[0],
-                        'maxX': box[0] + box[2],
-                        'minY': box[1],
-                        'maxY': box[1] + box[3]
-                    },
-                    'scores': {
-                        'score': instance['score']
-                    },
-                    'class_id': get_original_class_id(instance['category_id'])
-                })
-            wandb_image = wandb.Image(dataset_artifact.get_path(image_path).download(),
-                boxes={
-                    'preds': {
-                        'box_data': boxes
-                    }
-                })
-            table.add_data(wandb_image, id_str)
+        format_type = dataset_artifact.metadata['format']['type']
+        if format_type == "unified":
+            pred_by_id = {
+                example_pred['image_id']: example_pred
+                for example_pred in example_preds
+            }
+            for row in original_wb_table.data:
+                example_pred = pred_by_id[row[5]] # id column
+                boxes = []
+                for instance in example_pred['instances']:
+                    box = instance['bbox']
+                    boxes.append({
+                        'domain': 'pixel',
+                        'position': {
+                            'minX': box[0],
+                            'maxX': box[0] + box[2],
+                            'minY': box[1],
+                            'maxY': box[1] + box[3]
+                        },
+                        'scores': {
+                            'score': instance['score']
+                        },
+                        'class_id': get_original_class_id(instance['category_id'])
+                    })
+                wandb_image = wandb.Image(row[8],
+                    boxes={
+                        'preds': {
+                            'box_data': boxes
+                        }
+                    })
+                table.add_data(wandb_image, row[5])
+        else:
+            for example_pred in example_preds:
+                id_str = str(example_pred['image_id'])
+                image_path = os.path.join("images", "000000{}.jpg".format(id_str))
+                boxes = []
+                for instance in example_pred['instances']:
+                    box = instance['bbox']
+                    boxes.append({
+                        'domain': 'pixel',
+                        'position': {
+                            'minX': box[0],
+                            'maxX': box[0] + box[2],
+                            'minY': box[1],
+                            'maxY': box[1] + box[3]
+                        },
+                        'scores': {
+                            'score': instance['score']
+                        },
+                        'class_id': get_original_class_id(instance['category_id'])
+                    })
+                wandb_image = wandb.Image(dataset_artifact.get_path(image_path).download(),
+                    boxes={
+                        'preds': {
+                            'box_data': boxes
+                        }
+                    })
+                table.add_data(wandb_image, id_str)
         # eval_artifact.add(table, 'pred_table')
-        import pdb; pdb.set_trace()
-        eval_artifact.add(wandb.JoinedTable(original_table, table, "id"), "joined_prediction_table")
+        eval_artifact.add(wandb.JoinedTable(original_wb_table, table, "id"), "joined_prediction_table")
             # 'dataset.table.json', 'preds.table.json', 'path'),
             # 'preds.joined-table.json')
         wandb.run.log_artifact(eval_artifact)
