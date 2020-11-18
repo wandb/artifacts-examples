@@ -247,12 +247,12 @@ def main(args):
         # TODO: this is a hack until we have have cross-artifact references
         # eval_artifact.add_file(os.path.join(datadir, 'dataset.table.json'))
         # eval_artifact.add(dataset_artifact.get("{}_table".join(ds_artifact_name)),)
-
+        import pdb; pdb.set_trace()
         example_preds = torch.load(
             os.path.join(cfg.OUTPUT_DIR, 'inference', 'instances_predictions.pth'))
         table = wandb.Table(['preds'])
         for example_pred in example_preds:
-            image_path = os.path.join(datadir, example_pred['image_id'])
+            image_path = os.path.join(datadir, str(example_pred['image_id']))
             boxes = []
             for instance in example_pred['instances']:
                 box = instance['bbox']
