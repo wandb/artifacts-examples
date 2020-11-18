@@ -246,13 +246,15 @@ def main(args):
 
         # TODO: this is a hack until we have have cross-artifact references
         # eval_artifact.add_file(os.path.join(datadir, 'dataset.table.json'))
-        # eval_artifact.add(dataset_artifact.get("{}_table".join(ds_artifact_name)),)
+        # eval_artifact.add(dataset_artifact.get("{}_table".format(ds_artifact_name)),)
+        original_table = dataset_artifact.get("{}_table".join(ds_artifact_name))
         import pdb; pdb.set_trace()
         example_preds = torch.load(
             os.path.join(cfg.OUTPUT_DIR, 'inference', 'instances_predictions.pth'))
-        table = wandb.Table(['preds'])
+        table = wandb.Table(['preds', 'id'])
         for example_pred in example_preds:
-            image_path = os.path.join(datadir, str(example_pred['image_id']))
+            id_str = str(example_pred['image_id'])
+            image_path = os.path.join("images", "000000{}.jpg".format(id_str))
             boxes = []
             for instance in example_pred['instances']:
                 box = instance['bbox']
@@ -269,20 +271,17 @@ def main(args):
                     },
                     'class_id': get_original_class_id(instance['category_id'])
                 })
-            wandb_image = wandb.Image(image_path,
-                                      boxes={
-                                          'preds': {
-                                              'box_data': boxes
-                                          }
-                                      },
-                                      classes={
-                                          'path': 'classes.json'
-                                      })
-            table.add_data(wandb_image)
-        eval_artifact.add(table, 'preds.table.json')
-        eval_artifact.add(wandb.JoinedTable(
-            'dataset.table.json', 'preds.table.json', 'path'),
-            'preds.joined-table.json')
+            wandb_image = wandb.Image(dataset_artifact.get(image_path),
+                boxes={
+                    'preds': {
+                        'box_data': boxes
+                    }
+                }
+            table.add_data([wandb_image, id_str])
+        # eval_artifact.add(table, 'pred_table')
+        eval_artifact.add(wandb.JoinedTable(original_table, table, "id"), "joined_prediction_table")
+            # 'dataset.table.json', 'preds.table.json', 'path'),
+            # 'preds.joined-table.json')
         wandb.run.log_artifact(eval_artifact)
 
         # for file in glob.glob(os.path.join(cfg.OUTPUT_DIR, 'inference', '*')):
