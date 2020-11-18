@@ -277,6 +277,7 @@ def main(args):
                         'box_data': boxes
                     }
                 })
+            import pdb; pdb.set_trace()
             table.add_data([[wandb_image, id_str]])
         # eval_artifact.add(table, 'pred_table')
         eval_artifact.add(wandb.JoinedTable(original_table, table, "id"), "joined_prediction_table")
