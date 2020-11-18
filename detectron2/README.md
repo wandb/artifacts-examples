@@ -39,13 +39,6 @@ wandb init
 Next, let's upload a couple dataset artifacts to Weights & Biases.
 
 ```
-# Let's just train on examples of furniture. This creates a subset containing
-# 20% of the furniture examples in the COCO validation set.
-python demo/subset_coco_dataset.py \
-  --select_fraction=0.2 \
-  demo/demodata/coco/annotations/instances_val2017.json \
-  furniture_subset_train.json
-
 python create_dataset_unified_format.py \
   --name="furniture-small-train" \
   --json_file=demo/demodata/coco/annotations/instances_val2017.json \
@@ -53,8 +46,24 @@ python create_dataset_unified_format.py \
   --select_fraction=0.2 \
   --after_fraction=0.0
 
+python create_dataset_unified_format.py \
+  --name="furniture-small-val" \
+  --json_file=demo/demodata/coco/annotations/instances_val2017.json \
+  --image_dir=demo/demodata/coco/val2017 \
+  --select_fraction=0.1 \
+  --after_fraction=0.2
+```
+
+```
+# Let's just train on examples of furniture. This creates a subset containing
+# 20% of the furniture examples in the COCO validation set.
+python demo/subset_coco_dataset.py \
+  --select_fraction=0.2 \
+  demo/demodata/coco/annotations/instances_val2017.json \
+  furniture_subset_train.json
+
 # Now let's upload the dataset to Weights & Biases as an artifact.
-python create_dataset_wandb_format_simple.py \
+python create_dataset_coco_format.py \
   "furniture-small-train" \
   ./furniture_subset_train.json \
   demo/demodata/coco/val2017
@@ -67,7 +76,7 @@ python demo/subset_coco_dataset.py \
   furniture_subset_val.json
 
 # And let's upload that dataset to Weights & Biases as an artifact.
-python create_dataset_wandb_format_simple.py \
+python create_dataset_coco_format.py \
   "furniture-small-val" \
   ./furniture_subset_val.json \
   demo/demodata/coco/val2017

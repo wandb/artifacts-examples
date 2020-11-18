@@ -76,6 +76,7 @@ def main(argv):
     artifact = wandb.Artifact(type='dataset', name=args.name)
     with artifact.new_file('detectron2_metadata.json') as f:
         json.dump(detectron2_metadata, f)
+    artifact.add_file(subset_json_path, name='annotations.json')
     class_set = wandb.Classes([{'name': c['name'], 'id': c['id']} for c in cats])
     columns = list(images[0].keys())
     table = wandb.Table(columns = columns + ["image"])
