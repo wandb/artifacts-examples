@@ -73,8 +73,8 @@ def main(argv):
 
     # Create a run, an artfact, a class object, and a table
     run = wandb.init(job_type='create-dataset')
-    art = wandb.Artifact(type='dataset', name=args.name)
-    with art.new_file('detectron2_metadata.json') as f:
+    artifact = wandb.Artifact(type='dataset', name=args.name)
+    with artifact.new_file('detectron2_metadata.json') as f:
         json.dump(detectron2_metadata, f)
     class_set = wandb.Classes([{'name': c['name'], 'id': c['id']} for c in cats])
     columns = list(images[0].keys())
@@ -119,10 +119,10 @@ def main(argv):
         ] + [wandb_image])
 
     # Add the table to the artifact
-    art.add(table, 'data_table')
+    artifact.add(table, 'data_table')
 
     # Log the artifact for future use
-    run.log_artifact(art)
+    run.log_artifact(artifact)
 
 if __name__ == '__main__':
     main(sys.argv)
