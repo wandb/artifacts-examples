@@ -8,11 +8,11 @@ import wandb
 
 parser = argparse.ArgumentParser(
     description='Create a dataset artifact using the COCO format.')
-parser.add_argument('name', type=str,
+parser.add_argument('--name', type=str,
                     help='Name for this dataset')
-parser.add_argument('json_file', type=str,
+parser.add_argument('--json_file', type=str,
                     help='Path to COCO dataset json')
-parser.add_argument('image_dir', type=str,
+parser.add_argument('--image_dir', type=str,
                     help='Path to images directory, for images referenced in JSON')
 parser.add_argument('--supercategories', type=str, nargs='*', default=[],
                     help='coco supercategories to take examples from')
