@@ -15,30 +15,33 @@ Using the code in this repo you can:
 
 You can follow these steps to work through a complete example, using the COCO dataset.
 
-After installation, the first thing you'll need to do is upload a dataset to W&B. First, let's download the COCO Validation dataset, to use for this example.
-
 ### Setup
+First, install the necessary dependencies
 
 ```
-cd demo && ./download_coco_val.sh
+pip install -r requirements.txt
 ```
 
-Then, let's initialize a Weights & Biases project in this directory
+You will also need to install Detectron2. Please follow instructions for your environment here: https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md. 
 
-```
-pip install wandb torch torchvision opencv-python
-```
-
+Finally, let's initialize a Weights & Biases project in this directory
 
 ```
 wandb init
 ```
 
-### Dataset creation
-
-Next, let's upload a couple dataset artifacts to Weights & Biases.
+### Download Data
+Next, you will download the COCO dataset:
 
 ```
+cd demo && ./download_coco_val.sh
+```
+
+### Dataset creation
+Now, we will create a training dataset and a validation dataset. Both datasets will be uploaded to Weights & Biases. In fact, we will be uploading "Artifacts" to Weights & Biases. An artifact is similar to a versioned folder of data. This way, we will store the data in the same way that the detectron2 library prefers it. Furthermore, we will also store a `wandb.Table` which generates a view of the data useful for visual analysis. 
+
+```
+# Create a 20% subset dataset called "furniture-small-train".
 python create_dataset_unified_format.py \
   --name="furniture-small-train" \
   --json_file=demo/demodata/coco/annotations/instances_val2017.json \
@@ -46,6 +49,7 @@ python create_dataset_unified_format.py \
   --select_fraction=0.2 \
   --after_fraction=0.0
 
+# Create a 10% subset dataset called "furniture-small-val" (selected after first 20%).
 python create_dataset_unified_format.py \
   --name="furniture-small-val" \
   --json_file=demo/demodata/coco/annotations/instances_val2017.json \
@@ -54,43 +58,13 @@ python create_dataset_unified_format.py \
   --after_fraction=0.2
 ```
 
-```
-# Let's just train on examples of furniture. This creates a subset containing
-# 20% of the furniture examples in the COCO validation set.
-python demo/subset_coco_dataset.py \
-  --select_fraction=0.2 \
-  demo/demodata/coco/annotations/instances_val2017.json \
-  furniture_subset_train.json
-
-# Now let's upload the dataset to Weights & Biases as an artifact.
-python create_dataset_coco_format.py \
-  "furniture-small-train" \
-  ./furniture_subset_train.json \
-  demo/demodata/coco/val2017
-
-# Then we'll create a subset containing a different 10% of the furniture examples.
-python demo/subset_coco_dataset.py \
-  --after_fraction=0.2 \
-  --select_fraction=0.1 \
-  demo/demodata/coco/annotations/instances_val2017.json \
-  furniture_subset_val.json
-
-# And let's upload that dataset to Weights & Biases as an artifact.
-python create_dataset_coco_format.py \
-  "furniture-small-val" \
-  ./furniture_subset_val.json \
-  demo/demodata/coco/val2017
-```
-
 You can go to your project page in W&B, and click the artifacts tab to find your datasets. You'll be able to see their versions (there should only be one for each dataset if this is a new project), and then inspect their contents by clicking through to the Files tab.
 
-TODO: put UI images here, and throughout this example.
+![Dataset Files](./readme_images/demo1.png)
+![Dataset Visualization](./readme_images/demo2.png)
 
 ### Training
-
 Great! Now let's fine-tune a Detectron2 model on our dataset.
-
-First, let's install Detectron2: https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md. 
 
 First let's take a look at the config file we're going to use: `./demo/detectron2_configs/finetune_coco_maskrcnn.yaml`. The first part of the config tells detectron2 to use the base config "Base-RCNN-FPN.yaml" which let's us train a maskrcnn model. The SOLVER, VIS_PERIOD, and TEST stanzas tell detectron2 to train for 600 steps, save local checkpoints every 100 steps, and perform evaluation every 200 steps, saving the best checkpoints for the bbox.AP metric to W&B.
 
@@ -129,6 +103,9 @@ Now you can evaluate that model on the same test set we used during training.
     MODEL.ROI_HEADS.SCORE_THRESH_TEST 0.7 \
     MODEL.WEIGHTS "${MODEL_ARTIFACT}"
 ```
+
+![Dataset Visualization](./readme_images/demo3.png)
+![Dataset Visualization](./readme_images/demo4.png)
 
 In the UI, you can browse to the evaluation artifact just created, and look at its metadata to see the computed metrics.
 

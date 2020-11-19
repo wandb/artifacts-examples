@@ -1,0 +1,4 @@
+wandb 
+torch 
+torchvision 
+opencv-python
