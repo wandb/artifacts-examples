@@ -69,59 +69,6 @@ def register_wandb_dataset(artifact_uri):
                 json_file=json_file_path, image_root=image_root, evaluator_type="coco", **metadata
             )
             return load_coco_json(json_file_path, image_root, artifact_alias)
-        elif format_type == 'wandb-table':
-            table_file_path = os.path.join(
-                datadir, artifact.metadata['format']['path'])
-            table_data = json.load(open(table_file_path))
-            col_index = table_data['columns'].index(
-                artifact.metadata['format']['column'])
-            if col_index == -1:
-                raise ValueError('invalid column')
-
-            first_wb_image = table_data['data'][0][col_index]
-            classes_path = os.path.join(
-                datadir, first_wb_image['classes']['path'])
-            classes = json.load(open(classes_path))['class_set']
-            thing_dataset_id_to_contiguous_id = {
-                c["id"]: i for i, c in enumerate(classes)}
-
-            dataset_dicts = []
-            for row in table_data['data']:
-                wb_image = row[col_index]
-                dataset_dicts.append({
-                    # TODO: using path... we should figure out how to handle
-                    #     actual IDs
-                    'image_id': wb_image['path'],
-                    'file_name': os.path.join(datadir, wb_image['path']),
-                    'width': wb_image['width'],
-                    'height': wb_image['height'],
-                    # TODO 'ground_truth' hardcoded...
-                    'annotations': [
-                        {
-                            'category_id': thing_dataset_id_to_contiguous_id[
-                                box['class_id']],
-                            'bbox': [
-                                box['position']['minX'],
-                                box['position']['minY'],
-                                box['position']['maxX'],
-                                box['position']['maxY']
-                            ],
-                            'bbox_mode': BoxMode.XYXY_ABS
-                        }
-                        for box in
-                        wb_image['boxes']['ground_truth']]
-                })
-
-            metadata = {
-                'evaluator_type': "coco",
-                'thing_dataset_id_to_contiguous_id':
-                    thing_dataset_id_to_contiguous_id,
-                'thing_classes': [c["name"] for c in classes]
-            }
-            print('METADATA', metadata)
-            MetadataCatalog.get(artifact_uri).set(**metadata)
-
-            return dataset_dicts
         else:
             raise ValueError('Unknown artifact format_type')
 
@@ -129,14 +76,12 @@ def register_wandb_dataset(artifact_uri):
     # call run.use_artifact() on that at fetch time.
     DatasetCatalog.register(artifact_uri, use_artifact)
 
-
 def wandb_register_artifact_datasets(cfg):
     DATASETS = cfg.DATASETS
     all_datasets = DATASETS.TRAIN + DATASETS.TEST
     for ds_name in all_datasets:
         if ds_name.startswith(WANDB_ARTIFACT_PREFIX):
             register_wandb_dataset(ds_name)
-
 
 class WandbWriter(EventWriter):
     """
