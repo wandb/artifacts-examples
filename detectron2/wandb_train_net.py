@@ -237,7 +237,7 @@ def main(args):
                 #
                 # 
                 # Version 2: (works with wandb>=0.10.11: a bit confsing, but simulates the data de-duplication avail in 0.10.12 )
-                target_path = "images/{}".format(os.path.basename(row[8._path))
+                target_path = "images/{}".format(os.path.basename(row[8]._path))
                 eval_artifact.add_reference(row[8].artifact_source["artifact"].get_path(target_path).ref_url(), target_path)
                 wandb_image = wandb.Image(target_path, # image column
                     classes=row[8]._classes,
