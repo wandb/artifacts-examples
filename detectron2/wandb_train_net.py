@@ -226,40 +226,13 @@ def main(args):
                         },
                         'class_id': get_original_class_id(instance['category_id'])
                     })
-                wandb_image = wandb.Image(row[8],
+                wandb_image = wandb.Image(row[8], # image column
                     boxes={
                         'preds': {
                             'box_data': boxes
                         }
                     })
                 table.add_data(wandb_image, row[5])
-        else:
-            for example_pred in example_preds:
-                id_str = str(example_pred['image_id'])
-                image_path = os.path.join("images", "000000{}.jpg".format(id_str))
-                boxes = []
-                for instance in example_pred['instances']:
-                    box = instance['bbox']
-                    boxes.append({
-                        'domain': 'pixel',
-                        'position': {
-                            'minX': box[0],
-                            'maxX': box[0] + box[2],
-                            'minY': box[1],
-                            'maxY': box[1] + box[3]
-                        },
-                        'scores': {
-                            'score': instance['score']
-                        },
-                        'class_id': get_original_class_id(instance['category_id'])
-                    })
-                wandb_image = wandb.Image(dataset_artifact.get_path(image_path).download(),
-                    boxes={
-                        'preds': {
-                            'box_data': boxes
-                        }
-                    })
-                table.add_data(wandb_image, id_str)
         eval_artifact.add(wandb.JoinedTable(original_wb_table, table, "id"), "joined_prediction_table")
         wandb.run.log_artifact(eval_artifact)
 
