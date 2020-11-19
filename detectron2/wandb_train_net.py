@@ -228,6 +228,12 @@ def main(args):
                     })
                 # TODO (tim): Replace the line below once https://github.com/wandb/client/pull/1521 is merged into production
                 # wandb_image = wandb.Image(row[8], # image column
+                #     boxes={
+                #             'preds': {
+                #                 'box_data': boxes
+                #             }
+                #         })
+                
                 wandb_image = wandb.Image(row[8]._path, # image column
                     boxes={
                         'preds': {
