@@ -226,20 +226,37 @@ def main(args):
                         },
                         'class_id': get_original_class_id(instance['category_id'])
                     })
-                # TODO (tim): Replace the line below once https://github.com/wandb/client/pull/1521 is merged into production
+                # TODO (tim): Replace the executed code below with version 1 after the PR is merged
+                # Version 1: (best, but only works once https://github.com/wandb/client/pull/1521 is merged into production)
                 # wandb_image = wandb.Image(row[8], # image column
                 #     boxes={
                 #             'preds': {
                 #                 'box_data': boxes
                 #             }
                 #         })
-                
-                wandb_image = wandb.Image(row[8]._path, # image column
+                #
+                # 
+                # Version 2: (works with wandb>=0.10.11: a bit confsing, but simulates the data de-duplication avail in 0.10.12 )
+                target_path = "images/{}".format(os.path.basename(row[8._path))
+                eval_artifact.add_reference(row[8].artifact_source["artifact"].get_path(target_path).ref_url(), target_path)
+                wandb_image = wandb.Image(target_path, # image column
+                    classes=row[8]._classes,
                     boxes={
                         'preds': {
                             'box_data': boxes
                         }
                     })
+                #
+                #
+                # Version 3: (works with wandb>=0.10.11: logical, but duplicates data)
+                # wandb_image = wandb.Image(row[8]._path, # image column
+                #    classes=row[8]._classes,
+                #    boxes={
+                #        'preds': {
+                #            'box_data': boxes
+                #        }
+                #    })
+                #
                 table.add_data(wandb_image, row[5])
         eval_artifact.add(wandb.JoinedTable(original_wb_table, table, "id"), "joined_prediction_table")
         wandb.run.log_artifact(eval_artifact)
