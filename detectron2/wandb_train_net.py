@@ -226,7 +226,9 @@ def main(args):
                         },
                         'class_id': get_original_class_id(instance['category_id'])
                     })
-                wandb_image = wandb.Image(row[8], # image column
+                # TODO (tim): Replace the line below once https://github.com/wandb/client/pull/1521 is merged into production
+                # wandb_image = wandb.Image(row[8], # image column
+                wandb_image = wandb.Image(row[8]._path, # image column
                     boxes={
                         'preds': {
                             'box_data': boxes
