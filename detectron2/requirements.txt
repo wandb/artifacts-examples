@@ -1,4 +1,4 @@
 wandb 
-pytorch 
+torch 
 torchvision 
 opencv-python
