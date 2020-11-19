@@ -22,7 +22,11 @@ First, install the necessary dependencies
 pip install -r requirements.txt
 ```
 
-You will also need to install Detectron2. Please follow instructions for your environment here: https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md. 
+You will also need to install Detectron2. Please follow instructions for your environment here: https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md. For simple installs:
+
+```
+pip install 'git+https://github.com/facebookresearch/detectron2.git'
+```
 
 Finally, let's initialize a Weights & Biases project in this directory
 
