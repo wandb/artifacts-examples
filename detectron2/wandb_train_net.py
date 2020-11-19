@@ -126,50 +126,6 @@ class DefaultTrainNetTrainer(DefaultTrainer):
 
 
 class WandbTrainer(DefaultTrainNetTrainer):
-    # def __init__(self, cfg):
-    #     """
-    #     Args:
-    #         cfg (CfgNode):
-    #     """
-    #     logger = logging.getLogger("detectron2")
-    #     # setup_logger is not called for d2
-    #     if not logger.isEnabledFor(logging.INFO):
-    #         setup_logger()
-    #     # Assume these objects must be constructed in this order.
-    #     model = self.build_model(cfg)
-    #     optimizer = self.build_optimizer(cfg, model)
-    #     data_loader = self.build_train_loader(cfg)
-
-    #     # For training, wrap with DDP. But don't need this for inference.
-    #     if comm.get_world_size() > 1:
-    #         model = DistributedDataParallel(
-    #             model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
-    #         )
-
-    #     # Note: we're not calling super here, because we want to skip DefaultTrainer's init.
-    #     # TODO: Fix? To fix this we need to get rid of DefaultTrainer entirely. We could still
-    #     #   delegate to it's methods, by assinging them to our methods.
-    #     SimpleTrainer.__init__(self, model, data_loader, optimizer)
-
-    #     self.scheduler = self.build_lr_scheduler(cfg, optimizer)
-    #     # Assume no other objects need to be checkpointed.
-    #     # We can later make it checkpoint the stateful hooks
-
-    #     # Use wandb checkpointer instead of fvcore checkpointer. This checkpointer
-    #     # automatically makes an input artifact reference for the loaded model
-    #     self.checkpointer = wandb_detectron.WandbCheckpointer(
-    #         # Assume you want to save checkpoints together with logs/statistics
-    #         model,
-    #         cfg.OUTPUT_DIR,
-    #         optimizer=optimizer,
-    #         scheduler=self.scheduler,
-    #     )
-
-    #     self.start_iter = 0
-    #     self.max_iter = cfg.SOLVER.MAX_ITER
-    #     self.cfg = cfg
-
-    #     self.register_hooks(self.build_hooks())
 
     def build_writers(self):
         # Add wandb writer to save training metrics
@@ -242,11 +198,6 @@ def main(args):
             name='run-%s-preds' % run.id,
             metadata=res)
 
-        # eval_artifact.add_file(os.path.join(datadir, 'classes.json'))
-
-        # TODO: this is a hack until we have have cross-artifact references
-        # eval_artifact.add_file(os.path.join(datadir, 'dataset.table.json'))
-        # eval_artifact.add(dataset_artifact.get("{}_table".format(ds_artifact_name)),)
         original_wb_table = dataset_artifact.get("data_table")
         example_preds = torch.load(
             os.path.join(cfg.OUTPUT_DIR, 'inference', 'instances_predictions.pth'))
@@ -309,28 +260,9 @@ def main(args):
                         }
                     })
                 table.add_data(wandb_image, id_str)
-        # eval_artifact.add(table, 'pred_table')
         eval_artifact.add(wandb.JoinedTable(original_wb_table, table, "id"), "joined_prediction_table")
-            # 'dataset.table.json', 'preds.table.json', 'path'),
-            # 'preds.joined-table.json')
         wandb.run.log_artifact(eval_artifact)
 
-        # for file in glob.glob(os.path.join(cfg.OUTPUT_DIR, 'inference', '*')):
-        #     if not os.path.isfile(file):
-        #         continue
-        #     eval_artifact = wandb.Artifact(
-        #         type='result',
-        #         name='run-%s-%s' % (run.id, os.path.basename(file)),
-        #         metadata=res)
-        #     with eval_artifact.new_file('dataset.json') as f:
-        #         # TODO: we should use the URI for whatever our input artifact
-        #         #   ended up being, rather than what's passed in via test
-        #         # TODO: This writes an array, because there can be more than one
-        #         #   test dataset. How should we handle that case?
-        #         # TODO: standardize how to do this.
-        #         json.dump({'dataset_artifact': cfg.DATASETS.TEST}, f)
-        #     eval_artifact.add_file(file)
-        #     wandb.run.log_artifact(eval_artifact)
         wandb.run.log(res)
         return res
 
