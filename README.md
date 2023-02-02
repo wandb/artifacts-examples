@@ -1,3 +1,3 @@
-# W&B Artifacts examples.
+# W&B Artifacts examples
 
-*W&B Artifacts is currently in the pilot phase, as we work with customers to refine the APIs and experience.*
+*2022-01-01*: Some examples may be substantially out of date.
